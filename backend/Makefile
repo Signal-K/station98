@@ -1,6 +1,6 @@
 # Space Notifications Backend Makefile
 
-.PHONY: help build run clean utils-help utils-cleanup-events sync-astronauts test fmt vet
+.PHONY: help build run clean utils-help utils-cleanup-events sync-astronauts sync-programs test fmt vet
 
 # Default target
 help:
@@ -14,6 +14,7 @@ help:
 	@echo "  utils-help          Show utility commands help"
 	@echo "  utils-cleanup-events Run the duplicate events cleanup utility"
 	@echo "  sync-astronauts     Sync astronaut data to Pocketbase"
+	@echo "  sync-programs       Display latest space programs from API"
 	@echo "  test                Run all tests"
 	@echo "  fmt                 Format Go code"
 	@echo "  vet                 Run Go vet"
@@ -62,6 +63,10 @@ utils-help-dev:
 sync-astronauts:
 	@echo "🧑‍🚀 Syncing astronaut data..."
 	go run cmd/sync-astronauts/main.go
+
+sync-programs:
+	@echo "🚀 Fetching space programs..."
+	go run cmd/simple-sync-programs.go
 
 # Development targets
 test:
