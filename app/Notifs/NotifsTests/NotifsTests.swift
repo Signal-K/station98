@@ -6,7 +6,7 @@
 //
 
 import Testing
-@testable import Notifs
+@testable import Station98
 
 struct NotifsTests {
 
