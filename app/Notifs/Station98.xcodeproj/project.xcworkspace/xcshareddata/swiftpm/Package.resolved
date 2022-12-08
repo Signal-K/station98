@@ -1,5 +1,5 @@
 {
-  "originHash" : "b32cd2b3068b5e1b853d48245be465d6df4c2cf35c74ebfaf7af0be3d364c985",
+  "originHash" : "79806de23cbe47bddf3a6c4efadb563b7deaa0d51bb9be7c072431472925d1de",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -11,12 +11,66 @@
       }
     },
     {
+      "identity" : "clerk-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/clerk/clerk-ios",
+      "state" : {
+        "revision" : "e7687847ecfb3b2ec0d18f5c5804a443b0104a04",
+        "version" : "0.67.0"
+      }
+    },
+    {
+      "identity" : "factory",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/hmlongco/Factory",
+      "state" : {
+        "revision" : "ccc898f21992ebc130bc04cc197460a5ae230bcf",
+        "version" : "2.5.3"
+      }
+    },
+    {
+      "identity" : "get",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kean/Get",
+      "state" : {
+        "revision" : "31249885da1052872e0ac91a2943f62567c0d96d",
+        "version" : "2.2.1"
+      }
+    },
+    {
+      "identity" : "kingfisher",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/onevcat/Kingfisher.git",
+      "state" : {
+        "revision" : "2015fda791daa72c8058619545a593bf8c1dd59f",
+        "version" : "8.5.0"
+      }
+    },
+    {
+      "identity" : "phonenumberkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/marmelroy/PhoneNumberKit",
+      "state" : {
+        "revision" : "8cba2258060e356d5fc4836d4ff8549faa2409dd",
+        "version" : "4.1.4"
+      }
+    },
+    {
       "identity" : "sdk-for-apple",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/appwrite/sdk-for-apple",
       "state" : {
         "revision" : "0dafc0a1fe3238bd00902a5b31cad778c109b657",
         "version" : "11.0.0"
+      }
+    },
+    {
+      "identity" : "simplekeychain",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/auth0/SimpleKeychain",
+      "state" : {
+        "revision" : "776c4a6db74d5c6c143974be91c383680d468630",
+        "version" : "1.3.0"
       }
     },
     {

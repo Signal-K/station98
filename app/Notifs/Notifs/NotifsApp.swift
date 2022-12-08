@@ -7,10 +7,12 @@
 
 import SwiftUI
 import SwiftData
-
+import Clerk
 
 @main
 struct NotifsApp: App {
+    @State private var clerk = Clerk.shared
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
@@ -27,6 +29,11 @@ struct NotifsApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(\.clerk, clerk)
+                .task {
+                  clerk.configure(publishableKey: "pk_test_d2VsY29tZWQtZG9nZmlzaC0zLmNsZXJrLmFjY291bnRzLmRldiQ")
+                  try? await clerk.load()
+                }
         }
         .modelContainer(sharedModelContainer)
     }

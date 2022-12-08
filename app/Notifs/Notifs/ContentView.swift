@@ -6,49 +6,78 @@
 //
 
 import SwiftUI
-
-class ViewModel: ObservableObject {
-    @Published var email: String = ""
-    @Published var password: String = ""
-}
+import Clerk
 
 struct ContentView: View {
-    @ObservedObject var viewModel = ViewModel()
-    let appwrite = Appwrite()
+    @Environment(\.clerk) private var clerk
+    @State private var authIsPresented = false
+    @State private var showUserButton = true
+    @State private var selectedTab = 0
 
     var body: some View {
         VStack {
-            TextField(
-                "Email",
-                text: $viewModel.email
-            )
-            SecureField(
-                "Password",
-                text: $viewModel.password
-            )
-            Button(
-                action: { Task {
-                    try await appwrite.onRegister(
-                        viewModel.email,
-                        viewModel.password
-                    )
-                }},
-                label: {
-                    Text("Register")
+            if let _ = clerk.user {
+                if showUserButton {
+                    UserButton()
+                        .frame(width: 36, height: 36)
+                        .transition(.scale)
+                        .onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                withAnimation {
+                                    showUserButton = false
+                                }
+                            }
+                        }
+                } else {
+                    TabView(selection: $selectedTab) {
+                        LaunchEventsView()
+                            .tabItem {
+                                Label("Launches", systemImage: "calendar")
+                            }
+                            .tag(0)
+
+                        MissionsView()
+                            .tabItem {
+                                Label("Missions", systemImage: "lightbulb")
+                            }
+                            .tag(2)
+
+                        EventDetailView()
+                            .tabItem {
+                                Label("Event", systemImage: "video.bubble.left")
+                            }
+                            .tag(4)
+
+                        LaunchProvidersView()
+                            .tabItem {
+                                Label("Agencies", systemImage: "person")
+                            }
+                            .tag(5)
+
+                        PadsGlobeView()
+                            .tabItem {
+                                Label("Pads", systemImage: "house")
+                            }
+                            .tag(3)
+                    }
+                    .onChange(of: selectedTab) { newTab in
+                        if newTab == 3 {
+                            UITabBar.appearance().barTintColor = .black
+                            UITabBar.appearance().backgroundColor = .black
+                        } else {
+                            UITabBar.appearance().barTintColor = .systemBackground
+                            UITabBar.appearance().backgroundColor = .systemBackground
+                        }
+                    }
                 }
-            )
-            Button(
-                action: { Task {
-                    try await appwrite.onLogin(
-                        viewModel.email,
-                        viewModel.password
-                    )
-                }},
-                label: {
-                    Text("Login")
+            } else {
+                Button("Sign in") {
+                    authIsPresented = true
                 }
-            )
+            }
         }
-        .padding()
+        .sheet(isPresented: $authIsPresented) {
+            AuthView()
+        }
     }
 }

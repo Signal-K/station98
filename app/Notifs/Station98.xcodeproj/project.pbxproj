@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		B53D030F2E5ED193001CFBEB /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B53D030D2E5ED184001CFBEB /* WebKit.framework */; };
+		B5575EF22E7148F00002CDAB /* Clerk in Frameworks */ = {isa = PBXBuildFile; productRef = B5575EF12E7148F00002CDAB /* Clerk */; };
 		B5F64B292E6DD04E00E17A6B /* Appwrite in Frameworks */ = {isa = PBXBuildFile; productRef = B5F64B282E6DD04E00E17A6B /* Appwrite */; };
 /* End PBXBuildFile section */
 
@@ -59,6 +60,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B5575EF22E7148F00002CDAB /* Clerk in Frameworks */,
 				B5F64B292E6DD04E00E17A6B /* Appwrite in Frameworks */,
 				B53D030F2E5ED193001CFBEB /* WebKit.framework in Frameworks */,
 			);
@@ -132,6 +134,7 @@
 			name = Station98;
 			packageProductDependencies = (
 				B5F64B282E6DD04E00E17A6B /* Appwrite */,
+				B5575EF12E7148F00002CDAB /* Clerk */,
 			);
 			productName = Notifs;
 			productReference = B58344852E505B6200D8A3C8 /* Station98.app */;
@@ -217,6 +220,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				B5F64B272E6DD04E00E17A6B /* XCRemoteSwiftPackageReference "sdk-for-apple" */,
+				B5575EF02E7148F00002CDAB /* XCRemoteSwiftPackageReference "clerk-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B58344862E505B6200D8A3C8 /* Products */;
@@ -434,7 +438,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = fromscroobles.Station98;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fromscroobles.Station98;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -463,7 +467,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = fromscroobles.Station98;
+				PRODUCT_BUNDLE_IDENTIFIER = com.fromscroobles.Station98;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -585,6 +589,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		B5575EF02E7148F00002CDAB /* XCRemoteSwiftPackageReference "clerk-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/clerk/clerk-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.67.0;
+			};
+		};
 		B5F64B272E6DD04E00E17A6B /* XCRemoteSwiftPackageReference "sdk-for-apple" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/appwrite/sdk-for-apple";
@@ -596,6 +608,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		B5575EF12E7148F00002CDAB /* Clerk */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B5575EF02E7148F00002CDAB /* XCRemoteSwiftPackageReference "clerk-ios" */;
+			productName = Clerk;
+		};
 		B5F64B282E6DD04E00E17A6B /* Appwrite */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = B5F64B272E6DD04E00E17A6B /* XCRemoteSwiftPackageReference "sdk-for-apple" */;
