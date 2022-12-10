@@ -54,6 +54,7 @@ type Launch struct {
 	InfoURLs              []Link          `json:"infoURLs"`
 	VideoURLs             []Link          `json:"vidURLs"`
 	WebcastLive           bool            `json:"webcast_live"`
+	Image                 string          `json:"image"`
 	Timeline              []TimelineEntry `json:"timeline"`
 	Updates               []Update        `json:"updates"`
 }
@@ -348,6 +349,7 @@ func SyncLaunchProvidersAndEvents(client *pbclient.Client) {
 						"mission_id":   missionPBID,
 						"updates":      pbUpdates,
 						"vid_urls":     pbVidURLs,
+						"image":        l.Image,
 					})
 					if err != nil {
 						log.Printf("❌ Failed to insert event %s: %v", l.Name, err)
