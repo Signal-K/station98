@@ -35,7 +35,7 @@ type SpaceDevsResponseProgram struct {
 func SyncPrograms() error {
 	fmt.Println("🚀 Fetching latest space programs...")
 
-	apiURL := "https://ll.thespacedevs.com/2.2.0/program/?limit=30&ordering=-start_date&mode=normal"
+	apiURL := "https://ll.thespacedevs.com/2.2.0/program/?limit=3000&ordering=-start_date&mode=normal"
 	resp, err := http.Get(apiURL)
 	if err != nil {
 		return fmt.Errorf("failed to fetch programs: %w", err)
