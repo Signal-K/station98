@@ -12,27 +12,27 @@ import (
 )
 
 type SpaceDevsAstronaut struct {
-	Name     string `json:"name"`
-	Role     struct {
+	Name string `json:"name"`
+	Role struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"type"`
-	Priority int    `json:"id"`
+	Priority int `json:"id"`
 	Status   struct {
 		Name string `json:"name"`
 	} `json:"status"`
-	InSpace         bool   `json:"in_space"`
-	EvaTime         string `json:"eva_time"`
-	TimeInSpace     string `json:"time_in_space"`
-	DateOfBirth     *string `json:"date_of_birth"`
-	DateOfDeath     *string `json:"date_of_death"`
-	Nationality     []struct {
-		ID                        int    `json:"id"`
-		Name                      string `json:"name"`
-		Alpha2Code                string `json:"alpha_2_code"`
-		Alpha3Code                string `json:"alpha_3_code"`
-		NationalityName           string `json:"nationality_name"`
-		NationalityNameComposed   string `json:"nationality_name_composed"`
+	InSpace     bool    `json:"in_space"`
+	EvaTime     string  `json:"eva_time"`
+	TimeInSpace string  `json:"time_in_space"`
+	DateOfBirth *string `json:"date_of_birth"`
+	DateOfDeath *string `json:"date_of_death"`
+	Nationality []struct {
+		ID                      int    `json:"id"`
+		Name                    string `json:"name"`
+		Alpha2Code              string `json:"alpha_2_code"`
+		Alpha3Code              string `json:"alpha_3_code"`
+		NationalityName         string `json:"nationality_name"`
+		NationalityNameComposed string `json:"nationality_name_composed"`
 	} `json:"nationality"`
 	FirstFlight     string `json:"first_flight"`
 	LastFlight      string `json:"last_flight"`
@@ -46,7 +46,7 @@ type SpaceDevsAstronaut struct {
 			ID   int    `json:"id"`
 			Name string `json:"name"`
 		} `json:"type"`
-		ID   int    `json:"id"`
+		ID int `json:"id"`
 	} `json:"agency"`
 	Bio          string `json:"bio"`
 	WikipediaURL string `json:"wiki"`
@@ -60,7 +60,7 @@ type SpaceDevsResponseAstronaut struct {
 func SyncAstronauts() error {
 	fmt.Println("🧑🏼‍🚀 Syncing astronaut candidates....")
 
-	resp, err := http.Get("https://ll.thespacedevs.com/2.3.0/astronauts/?limit=50&mode=detailed&format=json&ordering=-date_of_birth")
+	resp, err := http.Get("https://ll.thespacedevs.com/2.3.0/astronauts/?limit=50000&mode=detailed&format=json&ordering=-date_of_birth")
 	if err != nil {
 		return fmt.Errorf("failed to fetch astronauts: %w", err)
 	}
@@ -78,16 +78,16 @@ func SyncAstronauts() error {
 
 	// Helper function to check if astronaut has earthling nationality
 	isEarthling := func(nationalities []struct {
-		ID                        int    `json:"id"`
-		Name                      string `json:"name"`
-		Alpha2Code                string `json:"alpha_2_code"`
-		Alpha3Code                string `json:"alpha_3_code"`
-		NationalityName           string `json:"nationality_name"`
-		NationalityNameComposed   string `json:"nationality_name_composed"`
+		ID                      int    `json:"id"`
+		Name                    string `json:"name"`
+		Alpha2Code              string `json:"alpha_2_code"`
+		Alpha3Code              string `json:"alpha_3_code"`
+		NationalityName         string `json:"nationality_name"`
+		NationalityNameComposed string `json:"nationality_name_composed"`
 	}) bool {
 		for _, nat := range nationalities {
-			if strings.ToLower(nat.NationalityName) == "earthling" || 
-			   strings.ToLower(nat.Name) == "earthling" {
+			if strings.ToLower(nat.NationalityName) == "earthling" ||
+				strings.ToLower(nat.Name) == "earthling" {
 				return true
 			}
 		}
@@ -147,12 +147,12 @@ func createAstronautInPocketbase(astro SpaceDevsAstronaut) error {
 
 	// Helper function to get nationality string
 	getNationality := func(nationalities []struct {
-		ID                        int    `json:"id"`
-		Name                      string `json:"name"`
-		Alpha2Code                string `json:"alpha_2_code"`
-		Alpha3Code                string `json:"alpha_3_code"`
-		NationalityName           string `json:"nationality_name"`
-		NationalityNameComposed   string `json:"nationality_name_composed"`
+		ID                      int    `json:"id"`
+		Name                    string `json:"name"`
+		Alpha2Code              string `json:"alpha_2_code"`
+		Alpha3Code              string `json:"alpha_3_code"`
+		NationalityName         string `json:"nationality_name"`
+		NationalityNameComposed string `json:"nationality_name_composed"`
 	}) string {
 		if len(nationalities) > 0 {
 			return nationalities[0].NationalityName
