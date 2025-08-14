@@ -10,7 +10,8 @@ services:
       - ./pb/data:/pb/data
 
   backend:
-    build: .
+    build:
+      context: ./backend
     depends_on:
       - pocketbase
     environment:
