@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  pocketbase:
+    build:
+      context: ./pb
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./pb/data:/pb/data
+
+  backend:
+    build: .
+    depends_on:
+      - pocketbase
+    environment:
+      - PB_URL=http://pocketbase:8080
+      - PB_ADMIN_EMAIL=admin@example.com
+      - PB_ADMIN_PASSWORD=youradminpassword
+    restart: unless-stopped
