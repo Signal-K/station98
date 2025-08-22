@@ -35,9 +35,17 @@ struct LaunchEventsView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(event.title)
                         .font(.headline)
+
                     Text(event.formattedDate)
                         .font(.subheadline)
                         .foregroundColor(.gray)
+
+                    if let missionID = event.mission_id {
+                        Text("Mission ID: \(missionID)")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    }
+
                     if let providerIDString = event.spacedevs_id,
                        let providerID = Int(providerIDString),
                        let provider = providerFetcher.providers.first(where: { $0.spacedevs_id == providerID }) {

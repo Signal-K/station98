@@ -19,6 +19,10 @@ struct ContentView: View {
                 .tabItem {
                     Label("Providers", systemImage: "globe")
                 }
+            MissionListView()
+                .tabItem {
+                    Label("Missions", systemImage: "lightbulb")
+                }
         }
     }
 }

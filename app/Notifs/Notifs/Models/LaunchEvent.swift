@@ -12,17 +12,24 @@ struct LaunchEvent: Codable, Identifiable {
     let source_url: String?
     let description: String?
     let spacedevs_id: String?
+    let mission_id: String?
+    let expand: LaunchEventExpand?
+    
+    struct LaunchEventExpand: Codable {
+        let mission: Mission?
+    }
 
     var formattedDate: String {
         let isoFormatter = ISO8601DateFormatter()
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .medium
-        dateFormatter.timeStyle = .short
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
         if let date = isoFormatter.date(from: datetime) {
-            return dateFormatter.string(from: date)
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            formatter.timeStyle = .short
+            return formatter.string(from: date)
         } else {
             return "Unknown date"
         }
     }
 }
- 

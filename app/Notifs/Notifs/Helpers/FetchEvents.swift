@@ -6,13 +6,13 @@ class EventFetcher: ObservableObject {
     @Published var isLoading = false
     @Published var error: String?
 
-    let baseURL = "http://localhost:8080" // Change if on device (e.g., use LAN IP)
+    let baseURL = "http://localhost:8080"
 
     func fetchEvents() async {
         isLoading = true
         error = nil
 
-        guard let url = URL(string: "\(baseURL)/api/collections/events/records") else {
+        guard let url = URL(string: "\(baseURL)/api/collections/events/records?filter=(mission_id!='')") else {
             self.error = "Invalid URL"
             return
         }
