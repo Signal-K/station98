@@ -14,6 +14,8 @@ type Event struct {
 	Type        string `json:"type"`
 	SourceURL   string `json:"source_url"`
 	Description string `json:"description"`
+	SpacedevsID string `json:"spacedevs_id"` // string, not a relation
+	ProviderID  string `json:"provider"`     // relation to launch_providers
 }
 
 func (c *Client) CreateEvent(e Event) error {

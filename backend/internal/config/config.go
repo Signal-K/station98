@@ -22,7 +22,7 @@ func Load() Config {
 
 	// Fail fast if any required config is missing
 	if cfg.PocketbaseURL == "" || cfg.PocketbaseAdmin == "" || cfg.PocketbasePassword == "" {
-		log.Fatal("Missing one or more required environment variables: PB_URL, PB_ADMIN_EMAIL, PB_ADMIN_PASSWORD")
+		log.Fatal("Missing one or more required environment variables: PB_URL, PB_ADMIN_EMAIL, PB_ADMIN_PASSWORD (should be teddy@scroobl.es for both email and password)")
 	}
 
 	return cfg
