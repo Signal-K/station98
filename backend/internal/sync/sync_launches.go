@@ -27,14 +27,92 @@ type Agency struct {
 }
 
 type Launch struct {
-	ID                    string `json:"id"`
-	Name                  string `json:"name"`
-	Net                   string `json:"net"`
-	URL                   string `json:"url"`
-	LaunchServiceProvider Agency `json:"launch_service_provider"`
-	Pad                   struct {
-		Name string `json:"name"`
-	} `json:"pad"`
+	ID                    string          `json:"id"`
+	Name                  string          `json:"name"`
+	Net                   string          `json:"net"`
+	URL                   string          `json:"url"`
+	Status                Status          `json:"status"`
+	LaunchServiceProvider Agency          `json:"launch_service_provider"`
+	Mission               *Mission        `json:"mission"`
+	Rocket                Rocket          `json:"rocket"`
+	Pad                   Pad             `json:"pad"`
+	InfoURLs              []Link          `json:"infoURLs"`
+	VideoURLs             []Link          `json:"vidURLs"`
+	WebcastLive           bool            `json:"webcast_live"`
+	Timeline              []TimelineEntry `json:"timeline"`
+	Updates               []Update        `json:"updates"`
+}
+
+type Status struct {
+	Abbrev      string `json:"abbrev"`
+	Description string `json:"description"`
+}
+
+type Link struct {
+	Priority int    `json:"priority"`
+	Title    string `json:"title"`
+	URL      string `json:"url"`
+}
+
+type TimelineEntry struct {
+	Time  int    `json:"time"` // seconds before/after T0
+	Event string `json:"event"`
+}
+
+type Update struct {
+	ID           int    `json:"id"`
+	ProfileImage string `json:"profile_image"`
+	Comment      string `json:"comment"`
+	InfoURL      string `json:"info_url"`
+	CreatedBy    string `json:"created_by"`
+	CreatedOn    string `json:"created_on"`
+}
+
+type Orbit struct {
+	ID     int    `json:"id"`
+	Name   string `json:"name"`
+	Abbrev string `json:"abbrev"`
+}
+
+type Mission struct {
+	ID          int      `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Type        string   `json:"type"`
+	Orbit       Orbit    `json:"orbit"`
+	Agencies    []Agency `json:"agencies"`
+}
+
+type Rocket struct {
+	ID           int    `json:"id"`
+	Name         string `json:"name"`
+	FullName     string `json:"full_name"`
+	Variant      string `json:"variant"`
+	Family       string `json:"family"`
+	Reusable     bool   `json:"reusable"`
+	Description  string `json:"description"`
+	LaunchMass   int    `json:"launch_mass"`
+	LEOCapacity  int    `json:"leo_capacity"`
+	GTOCapacity  int    `json:"gto_capacity"`
+	ImageURL     string `json:"image_url"`
+	InfoURL      string `json:"info_url"`
+	WikiURL      string `json:"wiki_url"`
+	Manufacturer Agency `json:"manufacturer"`
+}
+
+type Pad struct {
+	ID               int    `json:"id"`
+	Name             string `json:"name"`
+	Description      string `json:"description"`
+	Latitude         string `json:"latitude"`
+	Longitude        string `json:"longitude"`
+	CountryCode      string `json:"country_code"`
+	LocationName     string `json:"location_name"`
+	MapURL           string `json:"map_url"`
+	WikiURL          string `json:"wiki_url"`
+	MapImage         string `json:"map_image"`
+	LaunchCountYear  int    `json:"launch_count_year"`
+	LaunchCountTotal int    `json:"launch_count_total"`
 }
 
 type LaunchAPIResponse struct {
@@ -66,7 +144,7 @@ func getThrottleDelay(body string) time.Duration {
 func SyncLaunchProvidersAndEvents(client *pbclient.Client) {
 	log.Println("📡 Fetching upcoming launches...")
 
-	resp, err := http.Get("https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=10")
+	resp, err := http.Get("https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=50&mode=detailed")
 	if err != nil {
 		log.Printf("❌ Failed to fetch launches: %v", err)
 		return
@@ -93,77 +171,151 @@ func SyncLaunchProvidersAndEvents(client *pbclient.Client) {
 		return
 	}
 
-	providerIDs := make(map[int]Agency)
 	for _, l := range result.Results {
+		// Sync Provider
 		provider := l.LaunchServiceProvider
+		var providerPBID, rocketPBID, padPBID, missionPBID string
 		if provider.ID != 0 && provider.Name != "" {
-			providerIDs[provider.ID] = provider
+			providerRecord, _ := client.FindRecordByField("launch_providers", "spacedevs_id", provider.ID)
+			if providerRecord == nil {
+				created, err := client.CreateRecord("launch_providers", map[string]interface{}{
+					"spacedevs_id":  provider.ID,
+					"name":          provider.Name,
+					"abbrev":        provider.Abbrev,
+					"type":          provider.Type,
+					"country_code":  provider.Country,
+					"description":   provider.Desc,
+					"founding_year": provider.Founded,
+					"logo_url":      provider.LogoURL,
+					"image_url":     provider.ImageURL,
+					"wiki_url":      provider.WikiURL,
+					"info_url":      provider.InfoURL,
+				})
+				if err != nil {
+					log.Printf("❌ Failed to insert provider %s: %v", provider.Name, err)
+				} else {
+					providerPBID = (*created)["id"].(string)
+				}
+			} else {
+				providerPBID = (*providerRecord)["id"].(string)
+			}
 		}
-	}
 
-	// Ensure each provider exists before creating events
-	for _, provider := range providerIDs {
-		existing, err := client.FindRecordByField("launch_providers", "spacedevs_id", provider.ID)
-		if err == nil && existing != nil {
-			log.Printf("⏭️ Provider already exists: %s", provider.Name)
-			continue
+		// Sync Rocket
+		if r := l.Rocket; r.ID != 0 && r.FullName != "" {
+			rocketRecord, _ := client.FindRecordByField("rockets", "spacedevs_id", r.ID)
+			if rocketRecord == nil {
+				created, err := client.CreateRecord("rockets", map[string]interface{}{
+					"spacedevs_id": r.ID,
+					"name":         r.Name,
+					"full_name":    r.FullName,
+					"variant":      r.Variant,
+					"family":       r.Family,
+					"reusable":     r.Reusable,
+					"description":  r.Description,
+					"launch_mass":  r.LaunchMass,
+					"leo_capacity": r.LEOCapacity,
+					"gto_capacity": r.GTOCapacity,
+					"image_url":    r.ImageURL,
+					"info_url":     r.InfoURL,
+					"wiki_url":     r.WikiURL,
+					"manufacturer": r.Manufacturer.Name,
+				})
+				if err != nil {
+					log.Printf("❌ Failed to insert rocket %s: %v", r.FullName, err)
+				} else {
+					rocketPBID = (*created)["id"].(string)
+				}
+			} else {
+				rocketPBID = (*rocketRecord)["id"].(string)
+			}
 		}
-		_, err = client.CreateRecord("launch_providers", map[string]interface{}{
-			"spacedevs_id":  provider.ID,
-			"name":          provider.Name,
-			"abbrev":        provider.Abbrev,
-			"type":          provider.Type,
-			"country_code":  provider.Country,
-			"description":   provider.Desc,
-			"founding_year": provider.Founded,
-			"logo_url":      provider.LogoURL,
-			"image_url":     provider.ImageURL,
-			"wiki_url":      provider.WikiURL,
-			"info_url":      provider.InfoURL,
-		})
-		if err != nil {
-			log.Printf("❌ Failed to insert provider %s: %v", provider.Name, err)
+
+		// Sync Pad
+		if p := l.Pad; p.ID != 0 && p.Name != "" {
+			padRecord, _ := client.FindRecordByField("pads", "spacedevs_id", p.ID)
+			if padRecord == nil {
+				created, err := client.CreateRecord("pads", map[string]interface{}{
+					"spacedevs_id":       p.ID,
+					"name":               p.Name,
+					"description":        p.Description,
+					"latitude":           p.Latitude,
+					"longitude":          p.Longitude,
+					"country_code":       p.CountryCode,
+					"location_name":      p.LocationName,
+					"map_url":            p.MapURL,
+					"wiki_url":           p.WikiURL,
+					"map_image":          p.MapImage,
+					"launch_count_year":  p.LaunchCountYear,
+					"launch_count_total": p.LaunchCountTotal,
+				})
+				if err != nil {
+					log.Printf("❌ Failed to insert pad %s: %v", p.Name, err)
+				} else {
+					padPBID = (*created)["id"].(string)
+				}
+			} else {
+				padPBID = (*padRecord)["id"].(string)
+			}
+		}
+
+		// Sync Mission
+		if m := l.Mission; m != nil && m.ID != 0 && m.Name != "" {
+			missionRecord, _ := client.FindRecordByField("missions", "spacedevs_id", m.ID)
+			if missionRecord == nil {
+				created, err := client.CreateRecord("missions", map[string]interface{}{
+					"spacedevs_id": m.ID,
+					"name":         m.Name,
+					"description":  m.Description,
+					"type":         m.Type,
+					"orbit":        m.Orbit.Name,
+				})
+				if err != nil {
+					log.Printf("❌ Failed to insert mission %s: %v", m.Name, err)
+				} else {
+					missionPBID = (*created)["id"].(string)
+				}
+			} else {
+				missionPBID = (*missionRecord)["id"].(string)
+			}
+		}
+
+		// Sync Event
+		if eventRecord, _ := client.FindRecordByField("events", "title", l.Name); eventRecord == nil {
+			launchTime, _ := time.Parse(time.RFC3339, l.Net)
+			// Convert []Update to []pbclient.Update
+			var pbUpdates []pbclient.Update
+			for _, u := range l.Updates {
+				pbUpdates = append(pbUpdates, pbclient.Update{
+					ID:          strconv.Itoa(u.ID),
+					Title:       u.Comment,   // API 'comment' maps to our 'title'
+					Description: u.InfoURL,   // API 'info_url' maps to our 'description'
+					CreatedAt:   u.CreatedOn, // API 'created_on' maps to our 'created_at'
+				})
+			}
+			err := client.CreateEvent(pbclient.Event{
+				Title:       l.Name,
+				Type:        "rocket_launch",
+				Datetime:    launchTime.Format(time.RFC3339),
+				Location:    l.Pad.Name,
+				SourceURL:   l.URL,
+				Description: "Synced from Launch Library",
+				SpacedevsID: providerPBID, // must be PB ID for relation
+				ProviderID:  providerPBID,
+				RocketID:    rocketPBID,
+				PadID:       padPBID,
+				MissionID:   missionPBID,
+				Updates:     pbUpdates,
+			})
+			if err != nil {
+				log.Printf("❌ Failed to insert event %s: %v", l.Name, err)
+			} else {
+				log.Printf("✅ Synced event: %s", l.Name)
+			}
 		} else {
-			log.Printf("✅ Synced provider: %s", provider.Name)
+			log.Printf("⏭️ Event %s already exists", l.Name)
 		}
 	}
 
-	log.Println("✅ Provider sync complete.")
-	log.Println("📡 Syncing launches/events...")
-
-	for _, l := range result.Results {
-		// Check for existing event by title (unique field)
-		existingByTitle, errTitle := client.FindRecordByField("events", "title", l.Name)
-		if errTitle == nil && existingByTitle != nil {
-			log.Printf("⚠️ Launch %s already exists (by title), skipping.", l.Name)
-			continue
-		}
-
-		launchTime, _ := time.Parse(time.RFC3339, l.Net)
-
-		// Find the PocketBase provider record for this launch
-		providerRecord, err := client.FindRecordByField("launch_providers", "spacedevs_id", l.LaunchServiceProvider.ID)
-		if err != nil || providerRecord == nil {
-			log.Printf("❌ Could not find provider for launch %s (id %d)", l.Name, l.LaunchServiceProvider.ID)
-			continue
-		}
-		providerPBID := (*providerRecord)["id"].(string)
-
-		event := map[string]interface{}{
-			"title":        l.Name,
-			"type":         "rocket_launch",
-			"datetime":     launchTime.Format(time.RFC3339),
-			"location":     l.Pad.Name,
-			"source_url":   l.URL,
-			"description":  "Synced from Launch Library",
-			"spacedevs_id": providerPBID, // relation to launch_providers
-		}
-
-		_, err = client.CreateRecord("events", event)
-		if err != nil {
-			log.Printf("❌ Could not insert: %s → %v", l.Name, err)
-		} else {
-			log.Printf("✅ Synced: %s", l.Name)
-		}
-	}
+	log.Println("✅ All launches and related data synced.")
 }
