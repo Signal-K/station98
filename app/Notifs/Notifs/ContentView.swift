@@ -8,21 +8,42 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var selectedTab = 0
+
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             LaunchEventsView()
                 .tabItem {
                     Label("Launches", systemImage: "calendar")
                 }
+                .tag(0)
 
             LaunchProvidersView()
                 .tabItem {
                     Label("Providers", systemImage: "globe")
                 }
+                .tag(1)
+
             MissionListView()
                 .tabItem {
                     Label("Missions", systemImage: "lightbulb")
                 }
+                .tag(2)
+
+            PadsGlobeView()
+                .tabItem {
+                    Label("Pads", systemImage: "house")
+                }
+                .tag(3)
+        }
+        .onChange(of: selectedTab) { newTab in
+            if newTab == 3 {
+                UITabBar.appearance().barTintColor = .black
+                UITabBar.appearance().backgroundColor = .black
+            } else {
+                UITabBar.appearance().barTintColor = .systemBackground
+                UITabBar.appearance().backgroundColor = .systemBackground
+            }
         }
     }
 }

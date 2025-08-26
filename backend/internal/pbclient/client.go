@@ -39,6 +39,68 @@ func (c *Client) Login(email, password string) error {
 	return nil
 }
 
+// Returns all records in a collection
+func (c *Client) ListRecords(collection string) ([]map[string]interface{}, error) {
+	url := fmt.Sprintf("%s/api/collections/%s/records", c.BaseURL, collection)
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("Authorization", c.Token)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	var data struct {
+		Items []map[string]interface{} `json:"items"`
+	}
+
+	if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
+		return nil, err
+	}
+
+	return data.Items, nil
+}
+
+// ListRecordsWithPage returns records for a collection with pagination
+func (c *Client) ListRecordsWithPage(collection string, page, perPage int) ([]map[string]interface{}, error) {
+	url := fmt.Sprintf("%s/api/collections/%s/records?page=%d&perPage=%d", c.BaseURL, collection, page, perPage)
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("Authorization", c.Token)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	var data struct {
+		Items []map[string]interface{} `json:"items"`
+	}
+	if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
+		return nil, err
+	}
+	return data.Items, nil
+}
+
+// Deletes a record [based on ID] from a collection
+func (c *Client) DeleteRecord(collection, id string) error {
+	url := fmt.Sprintf("%s/api/collections/%s/records/%s", c.BaseURL, collection, id)
+	req, _ := http.NewRequest("DELETE", url, nil)
+	req.Header.Set("Authorization", c.Token)
+	res, err := http.DefaultClient.Do(req)
+
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode >= 300 {
+		return fmt.Errorf("Failed to delete record %s: %s", id, res.Status)
+	}
+
+	return nil
+}
+
 // CreateRecord inserts a new record into a collection
 func (c *Client) CreateRecord(collection string, data map[string]interface{}) (*map[string]interface{}, error) {
 	url := fmt.Sprintf("%s/api/collections/%s/records", c.BaseURL, collection)
