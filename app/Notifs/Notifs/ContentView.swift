@@ -18,17 +18,17 @@ struct ContentView: View {
                 }
                 .tag(0)
 
-            LaunchProvidersView()
-                .tabItem {
-                    Label("Providers", systemImage: "globe")
-                }
-                .tag(1)
-
             MissionListView()
                 .tabItem {
                     Label("Missions", systemImage: "lightbulb")
                 }
                 .tag(2)
+            
+            EventDetailView()
+                .tabItem {
+                    Label("Event", systemImage: "video.bubble.left")
+                }
+                .tag(4)
 
             PadsGlobeView()
                 .tabItem {

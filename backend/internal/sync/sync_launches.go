@@ -288,24 +288,34 @@ func SyncLaunchProvidersAndEvents(client *pbclient.Client) {
 			for _, u := range l.Updates {
 				pbUpdates = append(pbUpdates, pbclient.Update{
 					ID:          strconv.Itoa(u.ID),
-					Title:       u.Comment,   // API 'comment' maps to our 'title'
-					Description: u.InfoURL,   // API 'info_url' maps to our 'description'
-					CreatedAt:   u.CreatedOn, // API 'created_on' maps to our 'created_at'
+					Title:       u.Comment,
+					Description: u.InfoURL,
+					CreatedAt:   u.CreatedOn,
 				})
 			}
-			err := client.CreateEvent(pbclient.Event{
-				Title:       l.Name,
-				Type:        "rocket_launch",
-				Datetime:    launchTime.Format(time.RFC3339),
-				Location:    l.Pad.Name,
-				SourceURL:   l.URL,
-				Description: "Synced from Launch Library",
-				SpacedevsID: providerPBID, // must be PB ID for relation
-				ProviderID:  providerPBID,
-				RocketID:    rocketPBID,
-				PadID:       padPBID,
-				MissionID:   missionPBID,
-				Updates:     pbUpdates,
+			// Convert []Link (l.VideoURLs) to []map[string]interface{} for vid_urls
+			var pbVidURLs []map[string]interface{}
+			for _, v := range l.VideoURLs {
+				pbVidURLs = append(pbVidURLs, map[string]interface{}{
+					"title":    v.Title,
+					"url":      v.URL,
+					"priority": v.Priority,
+				})
+			}
+			_, err := client.CreateRecord("events", map[string]interface{}{
+				"title":        l.Name,
+				"type":         "rocket_launch",
+				"datetime":     launchTime.Format(time.RFC3339),
+				"location":     l.Pad.Name,
+				"source_url":   l.URL,
+				"description":  "Synced from Launch Library",
+				"spacedevs_id": providerPBID,
+				"provider":     providerPBID,
+				"rocket_id":    rocketPBID,
+				"pad_id":       padPBID,
+				"mission_id":   missionPBID,
+				"updates":      pbUpdates,
+				"vid_urls":     pbVidURLs,
 			})
 			if err != nil {
 				log.Printf("❌ Failed to insert event %s: %v", l.Name, err)
