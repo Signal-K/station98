@@ -29,6 +29,12 @@ struct ContentView: View {
                     Label("Event", systemImage: "video.bubble.left")
                 }
                 .tag(4)
+            
+            LaunchProvidersView()
+                .tabItem {
+                    Label("Agencies", systemImage: "person")
+                }
+                .tag(5)
 
             PadsGlobeView()
                 .tabItem {

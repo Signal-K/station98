@@ -48,14 +48,20 @@ struct LaunchEvent: Codable, Identifiable {
 
         var id: String { url }
     }
+    
+    var parsedDate: Date? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSZ"
+        formatter.timeZone = TimeZone.current
+        return formatter.date(from: datetime)
+    }
 
     var formattedDate: String {
-        let isoFormatter = ISO8601DateFormatter()
-        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = isoFormatter.date(from: datetime) {
+        if let date = parsedDate {
             let formatter = DateFormatter()
             formatter.dateStyle = .medium
             formatter.timeStyle = .short
+            formatter.timeZone = .current
             return formatter.string(from: date)
         } else {
             return "Unknown date"

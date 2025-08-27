@@ -25,3 +25,10 @@ struct EventUpdate: Identifiable, Codable {
         return created_at
     }
 }
+
+struct UpdateEntry: Identifiable {
+    var id: String
+    var title: String
+    var description: String
+    var created_at: String
+}

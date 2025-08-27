@@ -13,6 +13,7 @@ struct LaunchProvider: Codable, Identifiable {
     let abbrev: String?
     let country_code: String?
     let type: String?
+    let founded: String?
     let logo_url: String?
     let image_url: String?
     let wiki_url: String?
