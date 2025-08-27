@@ -19,9 +19,15 @@ struct EarthGlobeView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> UIView {
         let globeView = GlobeSceneView()
-        globeView.cameraNode.camera = SCNCamera()
-        globeView.cameraNode.position = SCNVector3(0, 0, 2.5)
-        globeView.sceneView.scene = SCNScene()
+        
+        let camera = SCNCamera()
+        camera.zFar = 1000
+        camera.zNear = 0.01
+        camera.fieldOfView = 60
+        
+        globeView.cameraNode.camera = camera
+        globeView.cameraNode.position = SCNVector3(x: 0, y: 0, z: 2.5)
+        
         globeView.sceneView.scene?.rootNode.addChildNode(globeView.cameraNode)
         globeView.sceneView.allowsCameraControl = true
         globeView.sceneView.backgroundColor = UIColor.black

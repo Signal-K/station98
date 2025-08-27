@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B53D030F2E5ED193001CFBEB /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B53D030D2E5ED184001CFBEB /* WebKit.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		B58344952E505B6300D8A3C8 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -24,6 +28,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B53D030D2E5ED184001CFBEB /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		B58344852E505B6200D8A3C8 /* Station98.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Station98.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B58344942E505B6300D8A3C8 /* Station98Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Station98Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B583449E2E505B6300D8A3C8 /* Station98UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Station98UITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -52,6 +57,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B53D030F2E5ED193001CFBEB /* WebKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,12 +78,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B53D030C2E5ED184001CFBEB /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				B53D030D2E5ED184001CFBEB /* WebKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		B583447C2E505B6200D8A3C8 = {
 			isa = PBXGroup;
 			children = (
 				B58344872E505B6200D8A3C8 /* Notifs */,
 				B58344972E505B6300D8A3C8 /* NotifsTests */,
 				B58344A12E505B6300D8A3C8 /* NotifsUITests */,
+				B53D030C2E5ED184001CFBEB /* Frameworks */,
 				B58344862E505B6200D8A3C8 /* Products */,
 			);
 			sourceTree = "<group>";
