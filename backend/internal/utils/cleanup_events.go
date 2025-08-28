@@ -57,6 +57,57 @@ func RemoveDuplicateEvents(client *pbclient.Client) error {
 		}
 	}
 
-	log.Printf("Cleanup complete. Removed %d duplicates.", len(duplicates))
+	log.Printf("Cleanup complete. Removed %d duplicates from events.", len(duplicates))
+
+	// --- Remove duplicates in missions collection ---
+	var allMissions []map[string]interface{}
+	page = 1
+	for {
+		missions, err := client.ListRecordsWithPage("missions", page, 100)
+		if err != nil {
+			return err
+		}
+		if len(missions) == 0 {
+			break
+		}
+		allMissions = append(allMissions, missions...)
+		page++
+	}
+
+	seenM := make(map[string]string)
+	duplicatesM := []string{}
+
+	for _, mission := range allMissions {
+		rawName, ok := mission["name"]
+		if !ok {
+			continue
+		}
+		name, ok := rawName.(string)
+		if !ok {
+			continue
+		}
+		normalized := strings.ToLower(strings.TrimSpace(name))
+		id, ok := mission["id"].(string)
+		if !ok {
+			continue
+		}
+		if prevID, exists := seenM[normalized]; exists {
+			duplicatesM = append(duplicatesM, id)
+			log.Printf("Duplicate mission found: %s (keeping %s, removing %s)", name, prevID, id)
+		} else {
+			seenM[normalized] = id
+		}
+	}
+
+	for _, id := range duplicatesM {
+		if err := client.DeleteRecord("missions", id); err != nil {
+			log.Printf("Failed to delete duplicate mission %s: %v", id, err)
+		} else {
+			log.Printf("Deleted duplicate mission %s", id)
+		}
+	}
+
+	log.Printf("Cleanup complete. Removed %d duplicates from missions.", len(duplicatesM))
+
 	return nil
 }

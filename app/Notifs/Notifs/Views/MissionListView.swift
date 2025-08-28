@@ -40,12 +40,23 @@ struct MissionsView: View {
     }
     
     private func loadMissions() async {
+        let cacheFilename = "cached_missions.json"
+        
+        // Try loading from cache first
+        if let cached: [Mission] = LocalCache.load(from: cacheFilename, as: [Mission].self), !cached.isEmpty {
+            self.missions = cached
+            self.isLoading = false
+            return
+        }
+
         do {
-            missions = try await MissionFetcher.shared.fetchMissions()
+            let fetched = try await MissionFetcher.shared.fetchMissions()
+            self.missions = fetched
+            LocalCache.save(fetched, to: cacheFilename)
         } catch {
             self.error = error.localizedDescription
         }
         
-        isLoading = false
+        self.isLoading = false
     }
 }

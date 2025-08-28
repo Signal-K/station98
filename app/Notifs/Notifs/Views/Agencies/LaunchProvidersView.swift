@@ -5,7 +5,10 @@
 //  Created by Liam Arbuckle on 24/8/2025.
 //
 
+import Foundation
 import SwiftUI
+
+let cachedProviders: [LaunchProvider]? = LocalCache.load(from: "cached_providers.json", as: [LaunchProvider].self)
 
 struct LaunchProvidersView: View {
     @StateObject var fetcher = LaunchProviderFetcher()
@@ -49,6 +52,9 @@ struct LaunchProvidersView: View {
             }
             .navigationTitle("Launch Providers")
             .task {
+                if let cached = cachedProviders {
+                    fetcher.providers = cached
+                }
                 await fetcher.fetch()
             }
             .overlay(content: {

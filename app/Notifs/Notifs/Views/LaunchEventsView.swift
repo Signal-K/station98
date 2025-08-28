@@ -8,13 +8,14 @@
 import SwiftUI
 
 struct LaunchEventsView: View {
-    @StateObject private var fetcher = EventFetcher()
+    @StateObject private var fetcher = EventFetcher() 
     @StateObject private var providerFetcher = LaunchProviderFetcher()
     
     var body: some View {
         NavigationView {
             content
                 .navigationTitle("🎸 Launches")
+                .navigationBarTitleDisplayMode(.inline)
         }
         .task {
             await fetcher.fetchEvents()
