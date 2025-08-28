@@ -6,15 +6,20 @@
 //
 
 import SwiftUI
+import EventKit
 
 struct LaunchEventDetailView: View {
     let event: LaunchEvent
+    @StateObject private var providerFetcher = LaunchProviderFetcher()
 
     var body: some View {
         ScrollView {
             content
         }
         .navigationTitle(event.title)
+        .task {
+            await providerFetcher.fetch()
+        }
     }
 
     private var content: some View {
@@ -22,7 +27,8 @@ struct LaunchEventDetailView: View {
             headerSection
 //            descriptionSection
 //            missionSection
-            sourceLinkSection
+//            sourceLinkSection
+            calendarSection
             updatesSection
             videosSection
             Spacer()
@@ -65,6 +71,61 @@ struct LaunchEventDetailView: View {
             if let sourceURL = event.source_url, let url = URL(string: sourceURL) {
                 Link("Source", destination: url)
                     .font(.callout)
+            }
+        }
+    }
+    
+    private var calendarSection: some View {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSZ"
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        let parsedDate = formatter.date(from: event.datetime)
+        let matchedProvider = providerFetcher.providers.first(where: { $0.spacedevs_id == Int(event.spacedevs_id ?? "") })
+
+        return VStack(alignment: .leading) {
+            Text("Debugging Calendar Section")
+            Text("Event spacedevs_id: \(event.spacedevs_id ?? "nil")")
+            Text("Fetched providers count: \(providerFetcher.providers.count)")
+            Text("Datetime raw value: \(event.datetime)")
+
+            if let provider = matchedProvider {
+                Text("Matched provider: \(provider.name)")
+            } else {
+                Text("No provider match")
+            }
+
+            if let parsedDate = parsedDate {
+                Text("Datetime valid: \(parsedDate.formatted())")
+            } else {
+                Text("Datetime invalid")
+            }
+
+            // Calendar export button
+            if let parsedDate = parsedDate {
+                Button(action: {
+                    let eventStore = EKEventStore()
+                    eventStore.requestAccess(to: .event) { granted, error in
+                        if granted {
+                            let event = EKEvent(eventStore: eventStore)
+                            event.title = self.event.title
+                            event.startDate = parsedDate
+                            event.endDate = parsedDate.addingTimeInterval(3600) // default 1-hour duration
+                            event.calendar = eventStore.defaultCalendarForNewEvents
+                            do {
+                                try eventStore.save(event, span: .thisEvent)
+                                print("Calendar event added")
+                            } catch {
+                                print("Failed to save event: \(error)")
+                            }
+                        } else {
+                            print("Access denied or error: \(error?.localizedDescription ?? "unknown")")
+                        }
+                    }
+                }) {
+                    Text("Add to Calendar")
+                        .foregroundColor(.blue)
+                        .padding(.top, 8)
+                }
             }
         }
     }

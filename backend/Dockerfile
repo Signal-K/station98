@@ -20,14 +20,14 @@ RUN echo '#!/bin/sh' > /app/startup.sh && \
     echo '# Wait for initial sync to complete (check for events in PocketBase)' >> /app/startup.sh && \
     echo 'echo "⏳ Waiting for initial sync to complete..."' >> /app/startup.sh && \
     echo 'COUNTER=0' >> /app/startup.sh && \
-    echo 'while [ $COUNTER -lt 60 ]; do' >> /app/startup.sh && \
+    echo 'while [ $COUNTER -lt 10 ]; do' >> /app/startup.sh && \
     echo '  # Check if we have events in the database' >> /app/startup.sh && \
     echo '  EVENT_COUNT=$(curl -s "${PB_URL}/api/collections/events/records?page=1&perPage=1" | grep -o "totalItems":[0-9]* | cut -d: -f2 | head -n1)' >> /app/startup.sh && \
     echo '  if [ "$EVENT_COUNT" != "" ] && [ "$EVENT_COUNT" -gt 0 ]; then' >> /app/startup.sh && \
     echo '    echo "✅ Found $EVENT_COUNT events, initial sync completed!"' >> /app/startup.sh && \
     echo '    break' >> /app/startup.sh && \
     echo '  fi' >> /app/startup.sh && \
-    echo '  echo "🔄 Waiting for events to be synced... ($COUNTER/60)"' >> /app/startup.sh && \
+    echo '  echo "🔄 Waiting for events to be synced... ($COUNTER/10)"' >> /app/startup.sh && \
     echo '  sleep 2' >> /app/startup.sh && \
     echo '  COUNTER=$((COUNTER + 1))' >> /app/startup.sh && \
     echo 'done' >> /app/startup.sh && \

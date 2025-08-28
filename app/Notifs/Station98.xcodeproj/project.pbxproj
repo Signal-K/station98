@@ -28,6 +28,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B514BC842E601F7800A6B50E /* Station98-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Station98-Info.plist"; sourceTree = "<group>"; };
 		B53D030D2E5ED184001CFBEB /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		B58344852E505B6200D8A3C8 /* Station98.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Station98.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B58344942E505B6300D8A3C8 /* Station98Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Station98Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -89,6 +90,7 @@
 		B583447C2E505B6200D8A3C8 = {
 			isa = PBXGroup;
 			children = (
+				B514BC842E601F7800A6B50E /* Station98-Info.plist */,
 				B58344872E505B6200D8A3C8 /* Notifs */,
 				B58344972E505B6300D8A3C8 /* NotifsTests */,
 				B58344A12E505B6300D8A3C8 /* NotifsUITests */,
@@ -415,6 +417,8 @@
 				DEVELOPMENT_TEAM = NDP87SHHDT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Station98-Info.plist";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -443,6 +447,8 @@
 				DEVELOPMENT_TEAM = NDP87SHHDT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Station98-Info.plist";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
