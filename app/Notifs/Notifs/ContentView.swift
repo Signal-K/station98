@@ -18,7 +18,7 @@ struct ContentView: View {
                 }
                 .tag(0)
 
-            MissionListView()
+            MissionsView()
                 .tabItem {
                     Label("Missions", systemImage: "lightbulb")
                 }

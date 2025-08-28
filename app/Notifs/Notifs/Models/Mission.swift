@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Mission: Identifiable, Codable {
+struct Mission: Codable, Identifiable {
     let id: String
     let name: String
     let description: String?

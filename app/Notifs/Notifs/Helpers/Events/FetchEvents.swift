@@ -11,12 +11,12 @@ class EventFetcher: ObservableObject {
     func fetchEvents() async {
         isLoading = true
         error = nil
-
-        guard let url = URL(string: "\(baseURL)/api/collections/events/records?filter=(mission_id!='')") else {
+        
+        guard let url = URL(string: "\(baseURL)/api/collections/events/records?perPage=200") else {
             self.error = "Invalid URL"
             return
         }
-
+        
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             let decoded = try JSONDecoder().decode(EventResponse.self, from: data)

@@ -7,39 +7,45 @@
 
 import SwiftUI
 
-struct MissionListView: View {
-    @State private var missionEventPairs: [(Mission, [LaunchEvent])] = []
+struct MissionsView: View {
+    @State private var missions: [Mission] = []
     @State private var isLoading = true
-
+    @State private var error: String?
+    
     var body: some View {
         NavigationView {
-            Group {
-                if isLoading {
-                    ProgressView("Loading Missions…")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if missionEventPairs.isEmpty {
-                    VStack {
-                        Text("No missions available.")
-                            .font(.headline)
-                            .padding()
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    List {
-                        ForEach(Array(missionEventPairs.enumerated()), id: \.element.0.id) { _, pair in
-                            MissionRowView(mission: pair.0, events: pair.1)
-                        }
-                    }
-                }
-            }
-            .navigationTitle("Missions")
+            content
+                .navigationTitle("🛰️ Missions")
         }
-        .onAppear {
-            MissionEventFetcher.shared.fetchMissionsAndLinkedEvents { pairs in
-                self.missionEventPairs = pairs
-                self.isLoading = false
+        .task {
+            await loadMissions()
+        }
+    }
+    
+    @ViewBuilder
+    private var content: some View {
+        if isLoading {
+            ProgressView("Loading missions...")
+        } else if let error = error {
+            Text("Error: \(error)")
+                .foregroundColor(.red)
+        } else if missions.isEmpty {
+            Text("No missions available.")
+                .foregroundColor(.gray)
+        } else {
+            List(missions) { mission in
+                MissionCard(mission: mission)
             }
         }
+    }
+    
+    private func loadMissions() async {
+        do {
+            missions = try await MissionFetcher.shared.fetchMissions()
+        } catch {
+            self.error = error.localizedDescription
+        }
+        
+        isLoading = false
     }
 }
