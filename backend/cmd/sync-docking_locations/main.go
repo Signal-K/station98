@@ -2,15 +2,16 @@ package main
 
 import (
 	"log"
-	"os"
 
 	"github.com/signal-k/notifs/internal/sync"
 )
 
 func main() {
-	if err := sync.SyncMostRecentDockingLocation(); err != nil {
-		log.Printf("❌ Docking location sync failed: %v", err)
-		os.Exit(1)
+	log.Println("🛰️ Fetching docking locations...")
+
+	if err := sync.SyncDockingLocations(); err != nil {
+		log.Fatalf("Sync failed: %v", err)
 	}
-	log.Println("✅ Docking location sync completed successfully.")
+
+	log.Println("✅ Docking location sync completed.")
 }
