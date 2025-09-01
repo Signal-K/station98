@@ -83,23 +83,6 @@ struct LaunchEventDetailView: View {
         let matchedProvider = providerFetcher.providers.first(where: { $0.spacedevs_id == Int(event.spacedevs_id ?? "") })
 
         return VStack(alignment: .leading) {
-            Text("Debugging Calendar Section")
-            Text("Event spacedevs_id: \(event.spacedevs_id ?? "nil")")
-            Text("Fetched providers count: \(providerFetcher.providers.count)")
-            Text("Datetime raw value: \(event.datetime)")
-
-            if let provider = matchedProvider {
-                Text("Matched provider: \(provider.name)")
-            } else {
-                Text("No provider match")
-            }
-
-            if let parsedDate = parsedDate {
-                Text("Datetime valid: \(parsedDate.formatted())")
-            } else {
-                Text("Datetime invalid")
-            }
-
             // Calendar export button
             if let parsedDate = parsedDate {
                 Button(action: {

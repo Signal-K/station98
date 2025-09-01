@@ -1,5 +1,6 @@
 package sync
 
+// SyncError is a simple error type for HTTP sync errors
 import (
 	"encoding/json"
 	"io"
@@ -24,6 +25,20 @@ type Agency struct {
 	ImageURL string `json:"image_url"`
 	WikiURL  string `json:"wiki_url"`
 	InfoURL  string `json:"info_url"`
+}
+
+// SyncError is a simple error type for HTTP sync errors
+type SyncError struct {
+	StatusCode int
+	Body       string
+}
+
+func (e *SyncError) Error() string {
+	return "Sync error: HTTP " + strconv.Itoa(e.StatusCode) + ": " + e.Body
+}
+
+func NewSyncError(code int, body string) error {
+	return &SyncError{StatusCode: code, Body: body}
 }
 
 type Launch struct {
@@ -142,190 +157,217 @@ func getThrottleDelay(body string) time.Duration {
 }
 
 func SyncLaunchProvidersAndEvents(client *pbclient.Client) {
-	log.Println("📡 Fetching upcoming launches...")
-
-	resp, err := http.Get("https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=50&mode=detailed")
-	if err != nil {
-		log.Printf("❌ Failed to fetch launches: %v", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == 429 {
-		body, _ := io.ReadAll(resp.Body)
-		delay := getThrottleDelay(string(body))
-		log.Printf("❌ Launches: HTTP 429: %s. Retrying in %v...", string(body), delay)
-		time.Sleep(delay)
-		SyncLaunchProvidersAndEvents(client)
-		return
-	}
-	if resp.StatusCode != 200 {
-		body, _ := io.ReadAll(resp.Body)
-		log.Printf("❌ Launches: HTTP %d: %s", resp.StatusCode, string(body))
-		return
-	}
-
-	var result LaunchAPIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		log.Printf("❌ Invalid JSON: %v", err)
-		return
-	}
-
-	for _, l := range result.Results {
-		// Sync Provider
-		provider := l.LaunchServiceProvider
-		var providerPBID, rocketPBID, padPBID, missionPBID string
-		if provider.ID != 0 && provider.Name != "" {
-			providerRecord, _ := client.FindRecordByField("launch_providers", "spacedevs_id", provider.ID)
-			if providerRecord == nil {
-				created, err := client.CreateRecord("launch_providers", map[string]interface{}{
-					"spacedevs_id":  provider.ID,
-					"name":          provider.Name,
-					"abbrev":        provider.Abbrev,
-					"type":          provider.Type,
-					"country_code":  provider.Country,
-					"description":   provider.Desc,
-					"founding_year": provider.Founded,
-					"logo_url":      provider.LogoURL,
-					"image_url":     provider.ImageURL,
-					"wiki_url":      provider.WikiURL,
-					"info_url":      provider.InfoURL,
-				})
-				if err != nil {
-					log.Printf("❌ Failed to insert provider %s: %v", provider.Name, err)
-				} else {
-					providerPBID = (*created)["id"].(string)
-				}
-			} else {
-				providerPBID = (*providerRecord)["id"].(string)
-			}
-		}
-
-		// Sync Rocket
-		if r := l.Rocket; r.ID != 0 && r.FullName != "" {
-			rocketRecord, _ := client.FindRecordByField("rockets", "spacedevs_id", r.ID)
-			if rocketRecord == nil {
-				created, err := client.CreateRecord("rockets", map[string]interface{}{
-					"spacedevs_id": r.ID,
-					"name":         r.Name,
-					"full_name":    r.FullName,
-					"variant":      r.Variant,
-					"family":       r.Family,
-					"reusable":     r.Reusable,
-					"description":  r.Description,
-					"launch_mass":  r.LaunchMass,
-					"leo_capacity": r.LEOCapacity,
-					"gto_capacity": r.GTOCapacity,
-					"image_url":    r.ImageURL,
-					"info_url":     r.InfoURL,
-					"wiki_url":     r.WikiURL,
-					"manufacturer": r.Manufacturer.Name,
-				})
-				if err != nil {
-					log.Printf("❌ Failed to insert rocket %s: %v", r.FullName, err)
-				} else {
-					rocketPBID = (*created)["id"].(string)
-				}
-			} else {
-				rocketPBID = (*rocketRecord)["id"].(string)
-			}
-		}
-
-		// Sync Pad
-		if p := l.Pad; p.ID != 0 && p.Name != "" {
-			padRecord, _ := client.FindRecordByField("pads", "spacedevs_id", p.ID)
-			if padRecord == nil {
-				created, err := client.CreateRecord("pads", map[string]interface{}{
-					"spacedevs_id":       p.ID,
-					"name":               p.Name,
-					"description":        p.Description,
-					"latitude":           p.Latitude,
-					"longitude":          p.Longitude,
-					"country_code":       p.CountryCode,
-					"location_name":      p.LocationName,
-					"map_url":            p.MapURL,
-					"wiki_url":           p.WikiURL,
-					"map_image":          p.MapImage,
-					"launch_count_year":  p.LaunchCountYear,
-					"launch_count_total": p.LaunchCountTotal,
-				})
-				if err != nil {
-					log.Printf("❌ Failed to insert pad %s: %v", p.Name, err)
-				} else {
-					padPBID = (*created)["id"].(string)
-				}
-			} else {
-				padPBID = (*padRecord)["id"].(string)
-			}
-		}
-
-		// Sync Mission
-		if m := l.Mission; m != nil && m.ID != 0 && m.Name != "" {
-			missionRecord, _ := client.FindRecordByField("missions", "spacedevs_id", m.ID)
-			if missionRecord == nil {
-				created, err := client.CreateRecord("missions", map[string]interface{}{
-					"spacedevs_id": m.ID,
-					"name":         m.Name,
-					"description":  m.Description,
-					"type":         m.Type,
-					"orbit":        m.Orbit.Name,
-				})
-				if err != nil {
-					log.Printf("❌ Failed to insert mission %s: %v", m.Name, err)
-				} else {
-					missionPBID = (*created)["id"].(string)
-				}
-			} else {
-				missionPBID = (*missionRecord)["id"].(string)
-			}
-		}
-
-		// Sync Event
-		if eventRecord, _ := client.FindRecordByField("events", "title", l.Name); eventRecord == nil {
-			launchTime, _ := time.Parse(time.RFC3339, l.Net)
-			// Convert []Update to []pbclient.Update
-			var pbUpdates []pbclient.Update
-			for _, u := range l.Updates {
-				pbUpdates = append(pbUpdates, pbclient.Update{
-					ID:          strconv.Itoa(u.ID),
-					Title:       u.Comment,
-					Description: u.InfoURL,
-					CreatedAt:   u.CreatedOn,
-				})
-			}
-			// Convert []Link (l.VideoURLs) to []map[string]interface{} for vid_urls
-			var pbVidURLs []map[string]interface{}
-			for _, v := range l.VideoURLs {
-				pbVidURLs = append(pbVidURLs, map[string]interface{}{
-					"title":    v.Title,
-					"url":      v.URL,
-					"priority": v.Priority,
-				})
-			}
-			_, err := client.CreateRecord("events", map[string]interface{}{
-				"title":        l.Name,
-				"type":         "rocket_launch",
-				"datetime":     launchTime.Format(time.RFC3339),
-				"location":     l.Pad.Name,
-				"source_url":   l.URL,
-				"description":  "Synced from Launch Library",
-				"spacedevs_id": providerPBID,
-				"provider":     providerPBID,
-				"rocket_id":    rocketPBID,
-				"pad_id":       padPBID,
-				"mission_id":   missionPBID,
-				"updates":      pbUpdates,
-				"vid_urls":     pbVidURLs,
-			})
+	go func() {
+		offset := 0
+		fetchCount := 0
+		for {
+			log.Printf("📡 Fetching launches (offset %d)...", offset)
+			url := "https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=50&mode=detailed&offset=" + strconv.Itoa(offset)
+			resp, err := http.Get(url)
 			if err != nil {
-				log.Printf("❌ Failed to insert event %s: %v", l.Name, err)
-			} else {
-				log.Printf("✅ Synced event: %s", l.Name)
+				log.Printf("❌ Failed to fetch launches: %v", err)
+				time.Sleep(1 * time.Minute)
+				continue
 			}
-		} else {
-			log.Printf("⏭️ Event %s already exists", l.Name)
-		}
-	}
 
-	log.Println("✅ All launches and related data synced.")
+			if resp.StatusCode == 429 {
+				body, _ := io.ReadAll(resp.Body)
+				resp.Body.Close()
+				delay := getThrottleDelay(string(body))
+				log.Printf("❌ Launches: HTTP 429: %s. Retrying in %v...", string(body), delay)
+				time.Sleep(delay)
+				continue
+			}
+			if resp.StatusCode != 200 {
+				body, _ := io.ReadAll(resp.Body)
+				resp.Body.Close()
+				log.Printf("❌ Launches: HTTP %d: %s", resp.StatusCode, string(body))
+				time.Sleep(30 * time.Minute)
+				continue
+			}
+
+			var result LaunchAPIResponse
+			err = json.NewDecoder(resp.Body).Decode(&result)
+			resp.Body.Close()
+			if err != nil {
+				log.Printf("❌ Invalid JSON: %v", err)
+				time.Sleep(30 * time.Minute)
+				continue
+			}
+
+			if len(result.Results) == 0 {
+				log.Printf("⏭️ No more launches found at offset %d. Resetting to offset 0.", offset)
+				offset = 0
+				fetchCount = 0
+				time.Sleep(30 * time.Minute)
+				continue
+			}
+
+			for _, l := range result.Results {
+				// ...existing sync logic for provider, rocket, pad, mission, event...
+				provider := l.LaunchServiceProvider
+				var providerPBID, rocketPBID, padPBID, missionPBID string
+				if provider.ID != 0 && provider.Name != "" {
+					providerRecord, _ := client.FindRecordByField("launch_providers", "spacedevs_id", provider.ID)
+					if providerRecord == nil {
+						created, err := client.CreateRecord("launch_providers", map[string]interface{}{
+							"spacedevs_id":  provider.ID,
+							"name":          provider.Name,
+							"abbrev":        provider.Abbrev,
+							"type":          provider.Type,
+							"country_code":  provider.Country,
+							"description":   provider.Desc,
+							"founding_year": provider.Founded,
+							"logo_url":      provider.LogoURL,
+							"image_url":     provider.ImageURL,
+							"wiki_url":      provider.WikiURL,
+							"info_url":      provider.InfoURL,
+						})
+						if err != nil {
+							log.Printf("❌ Failed to insert provider %s: %v", provider.Name, err)
+						} else {
+							providerPBID = (*created)["id"].(string)
+						}
+					} else {
+						providerPBID = (*providerRecord)["id"].(string)
+					}
+				}
+
+				// Sync Rocket
+				if r := l.Rocket; r.ID != 0 && r.FullName != "" {
+					rocketRecord, _ := client.FindRecordByField("rockets", "spacedevs_id", r.ID)
+					if rocketRecord == nil {
+						created, err := client.CreateRecord("rockets", map[string]interface{}{
+							"spacedevs_id": r.ID,
+							"name":         r.Name,
+							"full_name":    r.FullName,
+							"variant":      r.Variant,
+							"family":       r.Family,
+							"reusable":     r.Reusable,
+							"description":  r.Description,
+							"launch_mass":  r.LaunchMass,
+							"leo_capacity": r.LEOCapacity,
+							"gto_capacity": r.GTOCapacity,
+							"image_url":    r.ImageURL,
+							"info_url":     r.InfoURL,
+							"wiki_url":     r.WikiURL,
+							"manufacturer": r.Manufacturer.Name,
+						})
+						if err != nil {
+							log.Printf("❌ Failed to insert rocket %s: %v", r.FullName, err)
+						} else {
+							rocketPBID = (*created)["id"].(string)
+						}
+					} else {
+						rocketPBID = (*rocketRecord)["id"].(string)
+					}
+				}
+
+				// Sync Pad
+				if p := l.Pad; p.ID != 0 && p.Name != "" {
+					padRecord, _ := client.FindRecordByField("pads", "spacedevs_id", p.ID)
+					if padRecord == nil {
+						created, err := client.CreateRecord("pads", map[string]interface{}{
+							"spacedevs_id":       p.ID,
+							"name":               p.Name,
+							"description":        p.Description,
+							"latitude":           p.Latitude,
+							"longitude":          p.Longitude,
+							"country_code":       p.CountryCode,
+							"location_name":      p.LocationName,
+							"map_url":            p.MapURL,
+							"wiki_url":           p.WikiURL,
+							"map_image":          p.MapImage,
+							"launch_count_year":  p.LaunchCountYear,
+							"launch_count_total": p.LaunchCountTotal,
+						})
+						if err != nil {
+							log.Printf("❌ Failed to insert pad %s: %v", p.Name, err)
+						} else {
+							padPBID = (*created)["id"].(string)
+						}
+					} else {
+						padPBID = (*padRecord)["id"].(string)
+					}
+				}
+
+				// Sync Mission
+				if m := l.Mission; m != nil && m.ID != 0 && m.Name != "" {
+					missionRecord, _ := client.FindRecordByField("missions", "spacedevs_id", m.ID)
+					if missionRecord == nil {
+						created, err := client.CreateRecord("missions", map[string]interface{}{
+							"spacedevs_id": m.ID,
+							"name":         m.Name,
+							"description":  m.Description,
+							"type":         m.Type,
+							"orbit":        m.Orbit.Name,
+						})
+						if err != nil {
+							log.Printf("❌ Failed to insert mission %s: %v", m.Name, err)
+						} else {
+							missionPBID = (*created)["id"].(string)
+						}
+					} else {
+						missionPBID = (*missionRecord)["id"].(string)
+					}
+				}
+
+				// Sync Event
+				if eventRecord, _ := client.FindRecordByField("events", "title", l.Name); eventRecord == nil {
+					launchTime, _ := time.Parse(time.RFC3339, l.Net)
+					// Convert []Update to []pbclient.Update
+					var pbUpdates []pbclient.Update
+					for _, u := range l.Updates {
+						pbUpdates = append(pbUpdates, pbclient.Update{
+							ID:          strconv.Itoa(u.ID),
+							Title:       u.Comment,
+							Description: u.InfoURL,
+							CreatedAt:   u.CreatedOn,
+						})
+					}
+					// Convert []Link (l.VideoURLs) to []map[string]interface{} for vid_urls
+					var pbVidURLs []map[string]interface{}
+					for _, v := range l.VideoURLs {
+						pbVidURLs = append(pbVidURLs, map[string]interface{}{
+							"title":    v.Title,
+							"url":      v.URL,
+							"priority": v.Priority,
+						})
+					}
+					_, err := client.CreateRecord("events", map[string]interface{}{
+						"title":        l.Name,
+						"type":         "rocket_launch",
+						"datetime":     launchTime.Format(time.RFC3339),
+						"location":     l.Pad.Name,
+						"source_url":   l.URL,
+						"description":  "Synced from Launch Library",
+						"spacedevs_id": providerPBID,
+						"provider":     providerPBID,
+						"rocket_id":    rocketPBID,
+						"pad_id":       padPBID,
+						"mission_id":   missionPBID,
+						"updates":      pbUpdates,
+						"vid_urls":     pbVidURLs,
+					})
+					if err != nil {
+						log.Printf("❌ Failed to insert event %s: %v", l.Name, err)
+					} else {
+						log.Printf("✅ Synced event: %s", l.Name)
+					}
+				} else {
+					log.Printf("⏭️ Event %s already exists", l.Name)
+				}
+			}
+
+			log.Println("✅ Launches and related data synced for offset", offset)
+			offset += 50
+			fetchCount++
+			// Wait 1 minute after first fetch, then 30 minutes for subsequent fetches
+			if fetchCount == 1 {
+				time.Sleep(1 * time.Minute)
+			} else {
+				time.Sleep(30 * time.Minute)
+			}
+		}
+	}()
 }
