@@ -18,12 +18,14 @@ type SpaceDevsExpedition struct {
 	Station   struct {
 		Name string `json:"name"`
 	} `json:"spacestation"`
-	Patch struct {
-		Name  string `json:"name"`
-		Image string `json:"image_url"`
-	} `json:"mission_patch"`
+	MissionPatches []struct {
+		Name     string `json:"name"`
+		ImageURL string `json:"image_url"`
+	} `json:"mission_patches"`
 	Crew []struct {
-		Name string `json:"name"`
+		Astronaut struct {
+			Name string `json:"name"`
+		} `json:"astronaut"`
 	} `json:"crew"`
 }
 
@@ -32,7 +34,9 @@ type SpaceDevsResponseExpeditions struct {
 }
 
 func SyncExpeditions() error {
-	resp, err := http.Get("https://ll.thespacedevs.com/2.3.0/expeditions/?limit=30&ordering=-start")
+	fmt.Println("🚀 Fetching expeditions...")
+
+	resp, err := http.Get("https://ll.thespacedevs.com/2.3.0/expeditions/?limit=30&ordering=-start&mode=detailed")
 	if err != nil {
 		return fmt.Errorf("failed to fetch expeditions: %w", err)
 	}
@@ -60,46 +64,75 @@ func SyncExpeditions() error {
 }
 
 func createExpeditionInPocketbase(exp SpaceDevsExpedition) error {
-	stationId, err := findStationIdByName(exp.Station.Name)
-	if err != nil {
-		return fmt.Errorf("station lookup failed: %w", err)
+	var stationId string
+	var err error
+
+	if exp.Station.Name != "" {
+		stationId, err = findStationIdByName(exp.Station.Name)
+		if err != nil {
+			fmt.Printf("⚠️  Station not found for expedition %s: %s\n", exp.Name, exp.Station.Name)
+			stationId = ""
+		}
 	}
 
 	crewIds := []string{}
 	for _, member := range exp.Crew {
-		id, err := findAstronautIdByName(member.Name)
+		name := member.Astronaut.Name
+		id, err := findAstronautIdByName(name)
 		if err == nil && id != "" {
 			crewIds = append(crewIds, id)
 		}
 	}
 
+	// Pick first mission patch if any
+	patchImage := ""
+	if len(exp.MissionPatches) > 0 {
+		patchImage = exp.MissionPatches[0].ImageURL
+	}
+	fmt.Printf("🎖️  Expedition '%s' patch image: %s\n", exp.Name, patchImage)
+
 	payload := map[string]any{
 		"name":       exp.Name,
 		"start_date": exp.StartDate,
-		"end_date":   exp.EndDate,
-		"station":    stationId,
 		"url":        exp.URL,
-		"patches":    exp.Patch.Image,
 		"crew":       crewIds,
 	}
 
-	jsonData, _ := json.Marshal(payload)
+	if exp.EndDate != "" {
+		payload["end_date"] = exp.EndDate
+	}
+	if stationId != "" {
+		payload["station"] = stationId
+	}
+	if patchImage != "" {
+		payload["patches"] = patchImage
+	}
 
-	req, _ := http.NewRequest("POST", "http://127.0.0.1:8080/api/collections/expeditions/records", bytes.NewBuffer(jsonData))
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal expedition: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", "http://127.0.0.1:8080/api/collections/expeditions/records", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to build POST request: %w", err)
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	res, err := client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("POST request failed: %w", err)
 	}
 	defer res.Body.Close()
 
+	body, _ := io.ReadAll(res.Body)
+
 	if res.StatusCode >= 400 {
-		body, _ := io.ReadAll(res.Body)
-		return fmt.Errorf("HTTP %d: %s", res.StatusCode, body)
+		return fmt.Errorf("HTTP %d: %s", res.StatusCode, string(body))
 	}
 
+	fmt.Printf("✅ Success for %s\n", exp.Name)
 	return nil
 }
 
@@ -113,13 +146,19 @@ func findStationIdByName(name string) (string, error) {
 	}
 	defer resp.Body.Close()
 
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
 	var result struct {
 		Items []struct {
 			ID string `json:"id"`
 		} `json:"items"`
 	}
-	body, _ := io.ReadAll(resp.Body)
-	json.Unmarshal(body, &result)
+	if err := json.Unmarshal(body, &result); err != nil {
+		return "", err
+	}
 
 	if len(result.Items) == 0 {
 		return "", fmt.Errorf("station %s not found", name)
@@ -129,20 +168,28 @@ func findStationIdByName(name string) (string, error) {
 }
 
 func findAstronautIdByName(name string) (string, error) {
-	query := fmt.Sprintf("http://127.0.0.1:8080/api/collections/astronauts/records?filter=name='%s'", name)
+	encodedName := url.QueryEscape(fmt.Sprintf(`name="%s"`, name))
+	query := fmt.Sprintf("http://127.0.0.1:8080/api/collections/astronauts/records?filter=%s", encodedName)
+
 	resp, err := http.Get(query)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
 
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
 	var result struct {
 		Items []struct {
 			ID string `json:"id"`
 		} `json:"items"`
 	}
-	body, _ := io.ReadAll(resp.Body)
-	json.Unmarshal(body, &result)
+	if err := json.Unmarshal(body, &result); err != nil {
+		return "", err
+	}
 
 	if len(result.Items) == 0 {
 		return "", fmt.Errorf("astronaut %s not found", name)
