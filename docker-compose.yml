@@ -19,3 +19,58 @@ services:
       - PB_ADMIN_EMAIL=teddy@scroobl.es
       - PB_ADMIN_PASSWORD=teddy@scroobl.es
     restart: unless-stopped
+
+  appwrite:
+    image: appwrite/appwrite:1.4.0
+    container_name: appwrite
+    ports: 
+      - "8020:80"
+      - "8443:443"
+    environment:
+      - _APP_ENV=development
+      - _APP_OPENSSL_KEY_V1=your_random_secure_key
+      - _APP_SYSTEM_EMAIL_NAME=Appwrite
+      - _APP_SYSTEM_EMAIL_ADDRESS=admin@appwrite.local
+      - _APP_USAGE_STATS=false
+      - _APP_DOMAIN=localhost
+      - _APP_DOMAIN_TARGET=localhost
+      - _APP_DB_HOST=mariadb
+      - _APP_DB_PORT=3306
+      - _APP_DB_USER=root
+      - _APP_DB_PASS=rootpassword
+      - _APP_OPTIONS_ABUSE=disabled
+      - _APP_CONSOLE_WHITELIST_ROOT=true
+    volumes:
+      - ./.appwrite:/storage:rw
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - redis
+      - mariadb
+
+  mariadb:
+    image: mariadb:10.5
+    container_name: appwrite-mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=appwrite
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  redis:
+    image: redis:7
+    container_name: appwrite-redis
+    volumes:
+      - redis_data:/data
+
+volumes:
+  mariadb_data:
+  redis_data:
+
+# Note:
+# Appwrite does not support admin user creation directly via environment variables or docker-compose.
+# To create an admin user (teddy@scroobl.es / Password1234!@#$), run this after services are up:
+#
+# docker exec appwrite appwrite users create \
+#   --email="teddy@scroobl.es" \
+#   --password="Password1234!@#$" \
+#   --name="Teddy Scroobles"

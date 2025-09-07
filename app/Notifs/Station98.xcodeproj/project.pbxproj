@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		B53D030F2E5ED193001CFBEB /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B53D030D2E5ED184001CFBEB /* WebKit.framework */; };
+		B5F64B292E6DD04E00E17A6B /* Appwrite in Frameworks */ = {isa = PBXBuildFile; productRef = B5F64B282E6DD04E00E17A6B /* Appwrite */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,6 +59,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B5F64B292E6DD04E00E17A6B /* Appwrite in Frameworks */,
 				B53D030F2E5ED193001CFBEB /* WebKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -129,6 +131,7 @@
 			);
 			name = Station98;
 			packageProductDependencies = (
+				B5F64B282E6DD04E00E17A6B /* Appwrite */,
 			);
 			productName = Notifs;
 			productReference = B58344852E505B6200D8A3C8 /* Station98.app */;
@@ -212,6 +215,9 @@
 			);
 			mainGroup = B583447C2E505B6200D8A3C8;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B5F64B272E6DD04E00E17A6B /* XCRemoteSwiftPackageReference "sdk-for-apple" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B58344862E505B6200D8A3C8 /* Products */;
 			projectDirPath = "";
@@ -579,6 +585,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B5F64B272E6DD04E00E17A6B /* XCRemoteSwiftPackageReference "sdk-for-apple" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/appwrite/sdk-for-apple";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B5F64B282E6DD04E00E17A6B /* Appwrite */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B5F64B272E6DD04E00E17A6B /* XCRemoteSwiftPackageReference "sdk-for-apple" */;
+			productName = Appwrite;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B583447D2E505B6200D8A3C8 /* Project object */;
 }
