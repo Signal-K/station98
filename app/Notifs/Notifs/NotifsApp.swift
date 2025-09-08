@@ -8,12 +8,6 @@
 import SwiftUI
 import SwiftData
 
-import Appwrite
-
-let client = Client()
-    .setEndpoint("http://localhost:8020/v1")
-    .setProject("station126")
-    .setSelfSigned(true) 
 
 @main
 struct NotifsApp: App {

@@ -7,49 +7,48 @@
 
 import SwiftUI
 
+class ViewModel: ObservableObject {
+    @Published var email: String = ""
+    @Published var password: String = ""
+}
+
 struct ContentView: View {
-    @State private var selectedTab = 0
+    @ObservedObject var viewModel = ViewModel()
+    let appwrite = Appwrite()
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            LaunchEventsView()
-                .tabItem {
-                    Label("Launches", systemImage: "calendar")
+        VStack {
+            TextField(
+                "Email",
+                text: $viewModel.email
+            )
+            SecureField(
+                "Password",
+                text: $viewModel.password
+            )
+            Button(
+                action: { Task {
+                    try await appwrite.onRegister(
+                        viewModel.email,
+                        viewModel.password
+                    )
+                }},
+                label: {
+                    Text("Register")
                 }
-                .tag(0)
-
-            MissionsView()
-                .tabItem {
-                    Label("Missions", systemImage: "lightbulb")
+            )
+            Button(
+                action: { Task {
+                    try await appwrite.onLogin(
+                        viewModel.email,
+                        viewModel.password
+                    )
+                }},
+                label: {
+                    Text("Login")
                 }
-                .tag(2)
-            
-            EventDetailView()
-                .tabItem {
-                    Label("Event", systemImage: "video.bubble.left")
-                }
-                .tag(4)
-            
-            LaunchProvidersView()
-                .tabItem {
-                    Label("Agencies", systemImage: "person")
-                }
-                .tag(5)
-
-            PadsGlobeView()
-                .tabItem {
-                    Label("Pads", systemImage: "house")
-                }
-                .tag(3)
+            )
         }
-        .onChange(of: selectedTab) { newTab in
-            if newTab == 3 {
-                UITabBar.appearance().barTintColor = .black
-                UITabBar.appearance().backgroundColor = .black
-            } else {
-                UITabBar.appearance().barTintColor = .systemBackground
-                UITabBar.appearance().backgroundColor = .systemBackground
-            }
-        }
+        .padding()
     }
 }
