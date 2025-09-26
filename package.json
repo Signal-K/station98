@@ -1,0 +1,12 @@
+{
+  "name": "pocketbase-migration",
+  "version": "1.0.0",
+  "description": "Migration script for PocketBase events collection",
+  "main": "migrate_events_collection.js",
+  "scripts": {
+    "migrate": "node migrate_events_collection.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}
